@@ -1,28 +1,65 @@
 # Windows Security Audit
 
-Read-only PowerShell health report for common Windows protection features.
-
-> **Testing note:** This was tested by me to be working. User experience may vary.
+Read-only PowerShell assessment for common Windows protection and hardening controls.
 
 ## One-click use
 
 1. Download and extract the repository.
 2. Double-click `Run-OneClick.bat`.
-3. The complete security assessment runs directly—there is no menu and no security setting is changed.
-4. Review the exit code and CSV, JSON and HTML reports under `C:\Users\Public\Documents\WindowsSecurityAudits`.
+3. Approve the administrator prompt.
+4. Review CSV, JSON and HTML reports under `C:\Users\Public\Documents\WindowsSecurityAudits`.
 
-Included: `Invoke-WindowsSecurityAudit.ps1`
+The launcher elevates because several security cmdlets and registry checks are incomplete or unavailable to a standard user. Direct non-elevated execution returns a fatal error rather than producing a misleading partial success.
 
-## PowerShell usage
+## Checks
+
+- Microsoft Defender antivirus, real-time protection and signature age
+- Windows Firewall profiles
+- BitLocker protection
+- TPM presence and readiness
+- Secure Boot
+- SMB1 optional-feature state
+- UAC
+- Remote Desktop exposure
+- Pending restart indicators, including `PendingFileRenameOperations`
+
+Unavailable cmdlets, unsupported firmware interfaces and failed data sources are recorded as `Unknown`; they are not silently omitted.
+
+## Usage
 
 ```powershell
 .\Invoke-WindowsSecurityAudit.ps1
 ```
 
-The script checks built-in antivirus, firewall profiles, BitLocker, TPM readiness, Secure Boot, SMB1, UAC, Remote Desktop exposure and pending restart state. Results use `Pass`, `Warning`, `Fail` and `Unknown`.
+Custom output location:
 
-Exit code `0` means no failed checks, `1` means a fatal error and `2` means one or more checks failed.
+```powershell
+.\Invoke-WindowsSecurityAudit.ps1 -OutputRoot 'C:\Support\SecurityAudits'
+```
 
-Requirements differ between devices and organisations. Review the report against your approved standards.
+## Status values
+
+| Status | Meaning |
+|---|---|
+| `Pass` | Check met the script's baseline |
+| `Warning` | Review required; may be acceptable under approved policy |
+| `Fail` | Baseline is not met |
+| `Unknown` | The script could not produce a trustworthy result |
+
+## Exit codes
+
+| Code | Meaning |
+|---:|---|
+| `0` | Every recorded check passed |
+| `1` | Fatal execution or validation error |
+| `2` | One or more checks returned Warning, Fail or Unknown |
+
+This is a technical baseline, not a substitute for your organisation's approved policy or risk acceptance.
+
+## Validation
+
+A Windows GitHub Actions workflow parses every `.ps1` file with PowerShell's native parser and runs PSScriptAnalyzer with error-severity findings treated as failures.
+
+## License
 
 MIT License.
